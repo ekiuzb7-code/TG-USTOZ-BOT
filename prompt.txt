@@ -1,0 +1,105 @@
+Sen Python va Telegram Bot (aiogram 3.x) bo'yicha senior backend muhandisisan. Menga "UstozNazorat" maktab davomat tizimi uchun Railway platformasida 24/7 uzluksiz ishlaydigan professional, to'liq va tayyor Telegram Bot loyihasini yaratib ber.
+
+### 1. Loyiha haqida ma'lumot va arxitektura:
+- Til va kutubxona: Python 3.11+, aiogram 3.18+ (zamonaviy async/await arxitekturasi), supabase-py (yoki httpx async client), pydantic-settings.
+- Deploy platformasi: Railway (Worker sifatida "python main.py" orqali ishlaydi, webhook yoki long-polling).
+- WebApp (Mini App) URL: https://maktabos370.lovable.app
+- Ma'lumotlar bazasi: Supabase PostgreSQL (REST API orqali bog'lanadi).
+
+### 2. Ma'lumotlar bazasi tuzilishi:
+Bazada quyidagi jadvallar mavjud:
+1. `public.telegram_links`:
+   - `user_id` (UUID, primary key, profiles jadvaliga bog'langan)
+   - `telegram_id` (BIGINT, UNIQUE NOT NULL)
+   - `username` (TEXT, nullable)
+   - `linked_at` (TIMESTAMPTZ)
+2. `public.profiles`:
+   - `id` (UUID)
+   - `full_name` (TEXT)
+   - `avatar_url` (TEXT)
+
+### 3. Botning funksional talablari:
+
+1. **Bot ishga tushganda (`on_startup`):**
+   - Telegram API orqali avtomatik ravishda botning chap pastki menyusiga WebApp tugmasini o'rnatsin (`SetChatMenuButton` -> `MenuButtonWebApp(text="📱 Mini App", web_app=WebAppInfo(url=WEBAPP_URL))`).
+   - Bot buyruqlari ro'yxatini sozlasin (`set_my_commands`):
+     * `/start` - Botni ishga tushirish va Mini App'ni ochish
+     * `/status` - Telegram hisobingiz holatini tekshirish
+     * `/myid` - Sizning Telegram ID raqamingiz
+     * `/help` - Foydalanish bo'yicha yordam
+
+2. **`/start` buyrug'i:**
+   - Foydalanuvchining `telegram_id` sini oladi (`message.from_user.id`).
+   - Supabase'ning `telegram_links` jadvalidan ushbu `telegram_id` bo'yicha qidiruv qiladi (profiles jadvali bilan JOIN qilib ustozning `full_name` sini oladi).
+   
+   * **Holat A (Ustoz bazada mavjud bo'lsa):**
+     Matn:
+     "Assalomu alaykum, {full_name} ustoz! 👨‍🏫
+     
+     UstozNazorat tizimiga xush kelibsiz.
+     
+     Dars jadvalingizni ko'rish, o'z davomatingizni tekshirish va xona QR-kodini skanerlash uchun quyidagi tugmani bosing:"
+     Tugma (InlineKeyboardMarkup):
+     [📱 Dars va Davomat (Mini App)] -> WebAppInfo(url=WEBAPP_URL)
+     
+   * **Holat B (Ustoz hali ro'yxatdan o'tmagan yoki ID bog'lanmagan bo'lsa):**
+     Matn:
+     "Assalomu alaykum! ⚠️
+     
+     Siz hali UstozNazorat tizimida ro'yxatdan o'tmagansiz yoki Telegram hisobingiz profilingizga bog'lanmagan.
+     
+     Iltimos, maktab ma'muriyati (super admin yoki zavuch) bergan login va parolingiz bilan tizimga kirish uchun quyidagi tugmani bosing. Kirganingizdan so'ng Telegram hisobingiz avtomatik biriktiriladi:"
+     Tugma (InlineKeyboardMarkup):
+     [🔑 Tizimga kirish (Mini App)] -> WebAppInfo(url=WEBAPP_URL)
+
+3. **`/status` buyrug'i:**
+   - Foydalanuvchiga Telegram ID raqamini, username'ini va tizimga bog'langan/bog'lanmaganligini chiroyli formatda ko'rsatadi.
+
+4. **`/myid` buyrug'i:**
+   - Foydalanuvchining Telegram ID sini nusxalab olish oson bo'lgan `<code>{id}</code>` formatida chiqaradi (zavuch yoki adminga taqdim etish uchun qulay).
+
+5. **`/help` buyrug'i:**
+   - Qisqa qo'llanma:
+     * 1. Tugmani bosing va login/parolni kiriting.
+     * 2. Mini App ochilganda lokatsiya (GPS) va kamera ruxsatini tasdiqlang.
+     * 3. Dars xonasidagi QR-kodni skanerlang.
+
+### 4. Talab qilinadigan fayllar tuzilishi:
+Loyiha modulli, toza va xatosiz bo'lishi kerak:
+```text
+telegram-bot/
+├── bot/
+│   ├── __init__.py
+│   ├── config.py         # pydantic-settings orqali .env o'qish (BOT_TOKEN, WEBAPP_URL, SUPABASE_URL, SUPABASE_KEY)
+│   ├── database.py       # Supabase client va async tekshirish funksiyalari
+│   ├── handlers.py       # /start, /status, /myid, /help handlerlari
+│   └── keyboards.py      # Inline WebApp tugmalari
+├── main.py               # Botni ishga tushirish, logger va graceful shutdown
+├── requirements.txt      # Barcha bog'liqliklar
+├── Procfile              # Railway worker: python main.py
+├── runtime.txt           # python-3.11.9
+├── .env.example          # Barcha kerakli o'zgaruvchilar namunasi
+└── README.md             # Railway va BotFather sozlash ko'rsatmasi
+
+
+
+
+---
+
+### 💡 Ushbu kodni olgach, o‘rnatish tartibi:
+
+1. **Railway'da sozlash:**
+   - Railway'da yangi loyiha ochasiz (**Deploy from GitHub repo**).
+   - **Variables** bo‘limiga 4 ta o‘zgaruvchini kiritasiz:
+     * `BOT_TOKEN` = `@BotFather`dan olingan bot tokeni
+     * `WEBAPP_URL` = `https://maktabos370.lovable.app`
+     * `SUPABASE_URL` = `https://jmjwvvdooaosgldzvmdv.supabase.co`
+     * `SUPABASE_KEY` = `sb_publishable_0ilww9OMpAbvZjaYHqBAQA__zHYBBVp`
+   - Railway loyihani o‘zi avtomatik qurib, ishga tushiradi.
+
+2. **@BotFather'da Mini App tugmasi:**
+   - `@BotFather`ga `/setmenubutton` yuborasiz.
+   - Botingizni tanlab, havola sifatida `https://maktabos370.lovable.app` va tugma nomiga `📱 Mini App` deb yozasiz.
+
+Shundan so‘ng bot tayyor bo‘ladi — ustozlar botga kirganda bitta tugma bilan Mini App ochiladi va login qilganda ularning Telegram ID'si tizimga biriktiriladi.
+
