@@ -19,11 +19,24 @@ def format_welcome(first_name: str | None, last_name: str | None) -> str:
 def format_notification(data: dict[str, Any]) -> str:
     """API'dan kelgan xabarni HTML formatda chiroyliroq qaytaradi.
 
-    Agar API structured maydonlar (lesson_hour, subject, group, time) bersa —
-    ularni emoji bilan ajratib chiqadi. Aks holda oddiy `text` maydonini
-    qadorlarga bo'lib saralab qaytaradi.
+    Turga qaracha emoji va sarlavha qo'shiladi, xabarlar bir xil ko'rinmasligi uchun.
     """
     text = data.get("text", "")
+    notification_type = data.get("type", "")
+
+    # Turga qaracha emoji va sarlavha
+    if notification_type == "lesson_starting" or "boshlanadi" in text.lower():
+        icon = "🕐"
+        title = "Darsingiz tezroq boshlanadi!"
+    elif notification_type == "lesson_started" or "boshlandi" in text.lower():
+        icon = "🔔"
+        title = "Darsingiz boshlandi!"
+    elif notification_type == "attendance" or "qo'shingiz" in text.lower() or "davomat" in text.lower():
+        icon = "✅"
+        title = "Davomat belgilang!"
+    else:
+        icon = "📢"
+        title = "Yangilanish!"
 
     # Structured ma'lumotlar borligini tekshiramiz
     lesson_hour = data.get("lesson_hour")
@@ -31,28 +44,22 @@ def format_notification(data: dict[str, Any]) -> str:
     subject = data.get("subject")
     lesson_time = data.get("time")
 
-    if lesson_hour or group or subject or lesson_time:
-        lines: list[str] = []
-        if lesson_hour:
-            lines.append(f"⏰ <b>Dars soati:</b> {lesson_hour}")
-        if group:
-            lines.append(f"📋 <b>Guruh:</b> {group}")
-        if subject:
-            lines.append(f"📖 <b>Fan:</b> {subject}")
-        if lesson_time:
-            lines.append(f"🕐 <b>Vaqt:</b> {lesson_time}")
+    details: list[str] = []
+    if lesson_hour:
+        details.append(f"⏰ Dars soati: {lesson_hour}")
+    if group:
+        details.append(f"📋 Guruh: {group}")
+    if subject:
+        details.append(f"📖 Fan: {subject}")
+    if lesson_time:
+        details.append(f"🕐 Vaqt: {lesson_time}")
 
-        header = "\n".join(lines)
-        return (
-            "🔔 <b>Dars boshlandi!</b>\n\n"
-            f"{header}\n\n"
-            f"{text}\n\n"
-            "✅ Iltimos, QR kodni skanerlang!"
-        )
+    header = "\n".join(details) if details else ""
+    details_block = f"\n{header}\n" if header else "\n"
 
-    # Oddiy matn — chiroyli saralash
     return (
-        "🔔 <b>Yangi dars xabari!</b>\n\n"
+        f"{icon} <b>{title}</b>\n\n"
+        f"{details_block}"
         f"{text}\n\n"
-        "✅ Iltimos, QR kodni skanerlang!"
+        "📷 Iltimos, QR kodni skanerlang!"
     )

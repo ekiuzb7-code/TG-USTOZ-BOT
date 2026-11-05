@@ -28,6 +28,7 @@ dp = Dispatcher()
 
 _registered = False
 _stop_event = asyncio.Event()
+_sent_notifications: set[str] = set()
 
 
 async def _ensure_startup() -> None:
@@ -46,6 +47,10 @@ async def _notification_poller(bot: Bot) -> None:
                 messages = await api.fetch_notifications(session)
             if messages:
                 for msg in messages:
+                    key = f"{msg.get('telegram_id')}:{msg.get('text', '')}"
+                    if key in _sent_notifications:
+                        continue
+                    _sent_notifications.add(key)
                     try:
                         formatted = format_notification(msg)
                         await bot.send_message(
