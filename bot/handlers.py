@@ -10,6 +10,7 @@ from aiogram.types import MenuButtonWebApp
 
 from .api_client import api
 from .config import settings
+from .formatters import format_welcome
 from .keyboards import chat_menu_button, scan_button
 
 logger = logging.getLogger(__name__)
@@ -55,8 +56,9 @@ async def cmd_start(message: types.Message) -> None:
         return
 
     if result.get("registered"):
-        first_name = result.get("first_name") or "foydalanuvchi"
-        text = f"Assalomu alaykum, {first_name}! Davomat uchun Mini App'ni oching."
+        first_name = result.get("first_name")
+        last_name = result.get("last_name")
+        text = format_welcome(first_name, last_name)
         await message.answer(text, reply_markup=scan_button(settings.WEBAPP_URL))
     else:
         text = (

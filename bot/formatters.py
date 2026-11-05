@@ -3,6 +3,19 @@
 from typing import Any
 
 
+def format_welcome(first_name: str | None, last_name: str | None) -> str:
+    """Ro'yxatdan o'tgan ustoz uchun /start xabarini chiroyli formatda qaytaradi."""
+    name = first_name or ""
+    if last_name:
+        name = f"{name} {last_name}".strip()
+    name = name or "ustozjon"
+    return (
+        f"Assalomu alaykum, <b>{name}</b>! 👋\n\n"
+        "Davomat uchun Mini App'ni oching. 📱\n\n"
+        "✅ QR kodni skanerlang va davomatni belgilang."
+    )
+
+
 def format_notification(data: dict[str, Any]) -> str:
     """API'dan kelgan xabarni HTML formatda chiroyliroq qaytaradi.
 
