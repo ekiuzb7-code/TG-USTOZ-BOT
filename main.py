@@ -11,8 +11,8 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
+from bot.api_client import api
 from bot.config import settings
-from bot.database import db
 from bot.handlers import on_startup, register_handlers
 
 logging.basicConfig(
@@ -37,8 +37,30 @@ async def _ensure_startup() -> None:
     await on_startup(bot)
 
 
+async def _notification_poller(bot: Bot) -> None:
+    """Har 60 soniyada yangilanishlarni API'dan olib, foydalanuvchilarga yuboradi."""
+    while not _stop_event.is_set():
+        try:
+            async with await api.create_session() as session:
+                messages = await api.fetch_notifications(session)
+            if messages:
+                for msg in messages:
+                    try:
+                        await bot.send_message(msg["telegram_id"], msg["text"])
+                    except Exception as exc:  # noqa: BLE001
+                        logger.exception(
+                            "Xabar yuborilmadi (telegram_id=%s): %s",
+                            msg.get("telegram_id"),
+                            exc,
+                        )
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Notifications so'rovida xatolik: %s", exc)
+        await asyncio.sleep(60)
+
+
 async def _run_polling() -> None:
     await _ensure_startup()
+    asyncio.create_task(_notification_poller(bot))
     logger.info("Bot long-polling rejimida ishga tushmoqda...")
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 

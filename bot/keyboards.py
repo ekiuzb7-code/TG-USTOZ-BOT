@@ -1,28 +1,16 @@
 """Inline klaviatura tugmalari (WebApp mini-ilova bilan)."""
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-
-WEBAPP_URL: str  # sozlanadi main.py dan
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, MenuButtonWebApp, WebAppInfo
 
 
-def menu_button_webapp(webapp_url: str) -> InlineKeyboardMarkup:
-    """Start buyrug'i javobida ko'rsatiladigan WebApp tugmasi."""
+def scan_button(webapp_url: str) -> InlineKeyboardMarkup:
+    """Ro'yxatdan o'tgan foydalanuvchi uchun '📷 Skanerlash' tugmasi."""
     keyboard = [
-        [InlineKeyboardButton(text="📱 Dars va Davomat (Mini App)", web_app=WebAppInfo(url=webapp_url))]
+        [InlineKeyboardButton(text="📷 Skanerlash", web_app=WebAppInfo(url=webapp_url))]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
-def login_button_webapp(webapp_url: str) -> InlineKeyboardMarkup:
-    """Ro'yxatdan o'tmagan foydalanuvchilar uchun WebApp tugmasi."""
-    keyboard = [
-        [InlineKeyboardButton(text="🔑 Tizimga kirish (Mini App)", web_app=WebAppInfo(url=webapp_url))]
-    ]
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-
-def chat_menu_button(webapp_url: str):
-    """Botning chap pastki menyusiga o'rnatiladigan WebApp tugmasi (SetChatMenuButton)."""
-    from aiogram.types import MenuButtonWebApp
-
+def chat_menu_button(webapp_url: str) -> MenuButtonWebApp:
+    """Botning chap pastki menyusiga o'rnatiladigan WebApp tugmasi."""
     return MenuButtonWebApp(text="📱 Mini App", web_app=WebAppInfo(url=webapp_url))
