@@ -13,6 +13,7 @@ from aiogram.enums import ParseMode
 
 from bot.api_client import api
 from bot.config import settings
+from bot.formatters import format_notification
 from bot.handlers import on_startup, register_handlers
 
 logging.basicConfig(
@@ -46,7 +47,10 @@ async def _notification_poller(bot: Bot) -> None:
             if messages:
                 for msg in messages:
                     try:
-                        await bot.send_message(msg["telegram_id"], msg["text"])
+                        formatted = format_notification(msg)
+                        await bot.send_message(
+                            msg["telegram_id"], formatted, parse_mode="HTML"
+                        )
                     except Exception as exc:  # noqa: BLE001
                         logger.exception(
                             "Xabar yuborilmadi (telegram_id=%s): %s",
